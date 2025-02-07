@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Line Chart with D3</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <svg width="800" height="400"></svg>
+
+    <script>
+        // Set up dimensions
+        const width = 800, height = 400, margin = { top: 20, right: 30, bottom: 30, left: 50 };
+
+        // Select the SVG
+        const svg = d3.select("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+        // Load CSV data
+        d3.csv("data/mydata.csv").then(data => {
+            // Parse date and convert values to numbers
+            const parseDate = d3.timeParse("%Y-%m-%d");
+            data.forEach(d => {
+                d.date = parseDate(d.date);
+                d.value = +d.value;
+            });
+
+            // Set up scales
+            const x = d3.scaleTime()
+                .domain(d3.extent(data, d => d.date))
+                .range([margin.left, width - margin.right]);
+
+            const y = d3.scaleLinear()
+                .domain([0, d3.max(data, d => d.value)])
+                .range([height - margin.bottom, margin.top]);
+
+            // Create axes
+            svg.append("g")
+                .attr("transform", `translate(0,${height - margin.bottom})`)
+                .call(d3.axisBottom(x));
+
+            svg.append("g")
+                .attr("transform", `translate(${margin.left},0)`)
+                .call(d3.axisLeft(y));
+
+            // Create the line
+            const line = d3.line()
+                .x(d => x(d.date))
+                .y(d => y(d.value));
+
+            svg.append("path")
+                .datum(data)
+                .attr("fill", "none")
+                .attr("stroke", "steelblue")
+                .attr("stroke-width", 2)
+                .attr("d", line);
+        });
+    </script>
+</body>
+</html>
