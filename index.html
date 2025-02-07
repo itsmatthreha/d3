@@ -19,7 +19,7 @@
             .attr("height", height);
 
         // Load CSV data
-        senators.csv("data/mydata.csv").then(data => {
+        d3.csv("senators.csv").then(data => {
             // Parse date and convert values to numbers
             const parseDate = d3.timeParse("%Y-%m-%d");
             data.forEach(d => {
