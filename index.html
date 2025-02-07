@@ -19,55 +19,57 @@
             .attr("height", height);
 
         // Load CSV data
-        d3.csv("senators.csv").then(data => {
-            // Process the data
-            data.forEach(d => {
-                d.Year = +d.Year;  // Ensure year is a number
-            });
+d3.csv("senators.csv").then(data => {
+    // Parse year and convert percentages to numbers
+    const parseDate = d3.timeParse("%Y");
+    data.forEach(d => {
+        d.date = parseDate(d.Year); // Parse the Year as a date
+        // Remove the "%" and convert to number
+        Object.keys(d).forEach(key => {
+            if (key !== "Year" && d[key]) {
+                d[key] = parseFloat(d[key].replace('%', '')); // Remove '%' and convert to number
+            }
+        });
+    });
 
-            // Set up scales
-            const x = d3.scaleLinear()
-                .domain(d3.extent(data, d => d.Year)) // Use year for the x-axis
-                .range([margin.left, width - margin.right]);
+    console.log(data);  // Check the parsed data in the console
 
-            const y = d3.scaleLinear()
-                .domain([0, 100]) // Percentages go from 0 to 100
-                .range([height - margin.bottom, margin.top]);
+    // Set up scales
+    const x = d3.scaleTime()
+        .domain(d3.extent(data, d => d.date))
+        .range([margin.left, width - margin.right]);
 
-            // Create axes
-            svg.append("g")
-                .attr("transform", `translate(0,${height - margin.bottom})`)
-                .call(d3.axisBottom(x));
+    const y = d3.scaleLinear()
+        .domain([0, 100])  // You want the y-axis to go from 0 to 100
+        .range([height - margin.bottom, margin.top]);
 
-            svg.append("g")
-                .attr("transform", `translate(${margin.left},0)`)
-                .call(d3.axisLeft(y));
+    // Create axes
+    svg.append("g")
+        .attr("transform", `translate(0,${height - margin.bottom})`)
+        .call(d3.axisBottom(x));
 
-            // Function to create lines for each senator
-            const createLine = (senator) => {
-                const line = d3.line()
-                    .x(d => x(d.Year))
-                    .y(d => y(parseFloat(d[senator]))); // Convert percentage to number
+    svg.append("g")
+        .attr("transform", `translate(${margin.left},0)`)
+        .call(d3.axisLeft(y));
 
-                return svg.append("path")
-                    .datum(data)
-                    .attr("fill", "none")
-                    .attr("stroke", getColor(senator)) // Add unique color per senator
-                    .attr("stroke-width", 2)
-                    .attr("d", line);
-            };
+    // Create the lines for each senator
+    const line = d3.line()
+        .x(d => x(d.date))
+        .y(d => y(d[key])); // This will use the value for each senator
 
-            // Function to get a unique color for each senator
-            const getColor = (senator) => {
-                const colors = {
-                    "Patty Murray": "steelblue",
-                    "Ron Wyden": "orange",
-                    "Dick Durbin": "green",
-                    "Jack Reed": "purple",
-                    "Chuck Schumer": "red"
-                };
-                return colors[senator] || "gray";  // Default color if no match
-            };
+    // Plot lines for each senator
+    Object.keys(data[0]).forEach(key => {
+        if (key !== "Year" && data[0][key] !== undefined) {
+            svg.append("path")
+                .datum(data)
+                .attr("fill", "none")
+                .attr("stroke", "steelblue") // You can assign a different color to each senator later
+                .attr("stroke-width", 2)
+                .attr("d", line);
+        }
+    });
+});
+
 
             // Create a line for each senator
             ["Patty Murray", "Ron Wyden", "Dick Durbin", "Jack Reed", "Chuck Schumer"].forEach(senator => {
