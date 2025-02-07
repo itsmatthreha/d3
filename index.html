@@ -20,20 +20,18 @@
 
         // Load CSV data
         d3.csv("senators.csv").then(data => {
-            // Parse date and convert values to numbers
-            const parseDate = d3.timeParse("%Y-%m-%d");
+            // Process the data
             data.forEach(d => {
-                d.date = parseDate(d.date);
-                d.value = +d.value;
+                d.Year = +d.Year;  // Ensure year is a number
             });
 
             // Set up scales
-            const x = d3.scaleTime()
-                .domain(d3.extent(data, d => d.date))
+            const x = d3.scaleLinear()
+                .domain(d3.extent(data, d => d.Year)) // Use year for the x-axis
                 .range([margin.left, width - margin.right]);
 
             const y = d3.scaleLinear()
-                .domain([0, d3.max(data, d => d.value)])
+                .domain([0, 100]) // Percentages go from 0 to 100
                 .range([height - margin.bottom, margin.top]);
 
             // Create axes
@@ -45,17 +43,36 @@
                 .attr("transform", `translate(${margin.left},0)`)
                 .call(d3.axisLeft(y));
 
-            // Create the line
-            const line = d3.line()
-                .x(d => x(d.date))
-                .y(d => y(d.value));
+            // Function to create lines for each senator
+            const createLine = (senator) => {
+                const line = d3.line()
+                    .x(d => x(d.Year))
+                    .y(d => y(parseFloat(d[senator]))); // Convert percentage to number
 
-            svg.append("path")
-                .datum(data)
-                .attr("fill", "none")
-                .attr("stroke", "steelblue")
-                .attr("stroke-width", 2)
-                .attr("d", line);
+                return svg.append("path")
+                    .datum(data)
+                    .attr("fill", "none")
+                    .attr("stroke", getColor(senator)) // Add unique color per senator
+                    .attr("stroke-width", 2)
+                    .attr("d", line);
+            };
+
+            // Function to get a unique color for each senator
+            const getColor = (senator) => {
+                const colors = {
+                    "Patty Murray": "steelblue",
+                    "Ron Wyden": "orange",
+                    "Dick Durbin": "green",
+                    "Jack Reed": "purple",
+                    "Chuck Schumer": "red"
+                };
+                return colors[senator] || "gray";  // Default color if no match
+            };
+
+            // Create a line for each senator
+            ["Patty Murray", "Ron Wyden", "Dick Durbin", "Jack Reed", "Chuck Schumer"].forEach(senator => {
+                createLine(senator);
+            });
         });
     </script>
 </body>
