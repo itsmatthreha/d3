@@ -54,17 +54,21 @@
                 .attr("transform", `translate(${margin.left},0)`)
                 .call(d3.axisLeft(y));
 
+            // Colors for each senator
+            const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+
             // Create the lines for each senator
-            Object.keys(data[0]).forEach(key => {
+            Object.keys(data[0]).forEach((key, index) => {
                 if (key !== "Year" && data[0][key] !== undefined) {
                     const line = d3.line()
                         .x(d => x(d.date))
                         .y(d => y(d[key]));  // Use the senator’s value for y
 
+                    // Plot lines for each senator with a unique color
                     svg.append("path")
                         .datum(data)
                         .attr("fill", "none")
-                        .attr("stroke", "steelblue")  // You can change color for each senator if needed
+                        .attr("stroke", colorScale(index))  // Use a unique color for each senator
                         .attr("stroke-width", 2)
                         .attr("d", line);
 
@@ -75,5 +79,3 @@
     </script>
 </body>
 </html>
-
-
