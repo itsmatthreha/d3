@@ -18,58 +18,60 @@
             .attr("width", width)
             .attr("height", height);
 
-     // Load CSV data
-d3.csv("senators.csv").then(data => {
-    // Parse year and convert percentages to numbers
-    const parseDate = d3.timeParse("%Y");
-    data.forEach(d => {
-        d.date = parseDate(d.Year); // Parse the Year as a date
-        // Remove the "%" and convert to number
-        Object.keys(d).forEach(key => {
-            if (key !== "Year" && d[key]) {
-                d[key] = parseFloat(d[key].replace('%', '')); // Remove '%' and convert to number
-            }
+        // Load CSV data
+        d3.csv("senators.csv").then(data => {
+            console.log(data);  // Debugging step 1: Check the data structure
+
+            // Parse year and convert percentages to numbers
+            const parseDate = d3.timeParse("%Y");
+            data.forEach(d => {
+                d.date = parseDate(d.Year); // Parse the Year as a date
+                // Remove the "%" and convert to number
+                Object.keys(d).forEach(key => {
+                    if (key !== "Year" && d[key]) {
+                        d[key] = parseFloat(d[key].replace('%', '')); // Remove '%' and convert to number
+                    }
+                });
+            });
+
+            console.log("Processed Data:", data);  // Debugging step 2: Ensure data is correctly parsed
+
+            // Set up scales
+            const x = d3.scaleTime()
+                .domain(d3.extent(data, d => d.date))
+                .range([margin.left, width - margin.right]);
+
+            const y = d3.scaleLinear()
+                .domain([0, 100])  // Y axis range 0-100%
+                .range([height - margin.bottom, margin.top]);
+
+            // Create axes
+            svg.append("g")
+                .attr("transform", `translate(0,${height - margin.bottom})`)
+                .call(d3.axisBottom(x));
+
+            svg.append("g")
+                .attr("transform", `translate(${margin.left},0)`)
+                .call(d3.axisLeft(y));
+
+            // Create the lines for each senator
+            Object.keys(data[0]).forEach(key => {
+                if (key !== "Year" && data[0][key] !== undefined) {
+                    const line = d3.line()
+                        .x(d => x(d.date))
+                        .y(d => y(d[key]));  // Use the senator’s value for y
+
+                    svg.append("path")
+                        .datum(data)
+                        .attr("fill", "none")
+                        .attr("stroke", "steelblue")  // You can change color for each senator if needed
+                        .attr("stroke-width", 2)
+                        .attr("d", line);
+
+                    console.log(`Line for ${key} created!`);  // Debugging step 3: Verify line creation for each senator
+                }
+            });
         });
-    });
-
-    console.log(data);  // Check the parsed data in the console
-
-    // Set up scales
-    const x = d3.scaleTime()
-        .domain(d3.extent(data, d => d.date))
-        .range([margin.left, width - margin.right]);
-
-    const y = d3.scaleLinear()
-        .domain([0, 100])  // You want the y-axis to go from 0 to 100
-        .range([height - margin.bottom, margin.top]);
-
-    // Create axes
-    svg.append("g")
-        .attr("transform", `translate(0,${height - margin.bottom})`)
-        .call(d3.axisBottom(x));
-
-    svg.append("g")
-        .attr("transform", `translate(${margin.left},0)`)
-        .call(d3.axisLeft(y));
-
-    // Create the lines for each senator
-    const line = d3.line()
-        .x(d => x(d.date))
-        .y(d => y(d[key])); // This will use the value for each senator
-
-    // Plot lines for each senator
-    Object.keys(data[0]).forEach(key => {
-        if (key !== "Year" && data[0][key] !== undefined) {
-            svg.append("path")
-                .datum(data)
-                .attr("fill", "none")
-                .attr("stroke", "steelblue") // You can assign a different color to each senator later
-                .attr("stroke-width", 2)
-                .attr("d", line);
-        }
-    });
-});
-
     </script>
 </body>
 </html>
